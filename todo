@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# todo
+#
+# A simple todo manager
+
+CMD=$1
+DIR=$HOME/.todos
+FILENAME=todos.txt
+FILE=$DIR/$FILENAME
+
+if [ ! -d $DIR ]; then
+  mkdir $DIR
+fi
+
+if [ ! -f $FILE ]; then
+  touch $FILE
+fi
+
+case $CMD in
+  add)
+    timestamp=$(date +%Y-%m-%d:%H:%M:%S)
+
+    # capture all input after the command argument
+    input="${@:2}"
+
+    # get the line number of the new entry, strip whitespace
+    number=$(wc -l < $FILE | xargs)
+    echo "$timestamp $input" >> $FILE
+    echo "($number) $timestamp $input"
+    ;;
+
+  complete)
+    # remove the specified line number
+    line=$(( $2 + 1 ))
+    sed -ie "${line}d" $FILE
+    ;;
+
+  clear)
+    > $FILE
+    ;;
+
+  list|"")
+    count=0
+    filter=$2
+
+    # read the todo file and output the entries
+    while read -r todo
+    do
+      # if a filter is provided, only output filter matches
+      if [ -n "$filter" ]; then
+        if [[ $todo == *"$filter"* ]]; then
+          echo "($count) $todo"
+        fi
+      else
+        echo "($count) $todo"
+      fi
+      (( count++  ))
+    done < "$FILE"
+    if [[ count -eq 0 ]]; then
+      echo "No todos"
+    fi
+    ;;
+
+  *)
+    echo "Unknown command"
+    ;;
+esac
+
+
